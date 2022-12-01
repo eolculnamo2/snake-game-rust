@@ -22,7 +22,7 @@ pub fn will_hit_wall(location: RowCol, direction: Direction) -> bool {
     let (row_id, col_id) = location;
     match direction {
         Direction::Left => col_id % BOARD_WIDTH == 0,
-        Direction::Right => col_id + 1 % BOARD_WIDTH == 0,
+        Direction::Right => (col_id + 1) % BOARD_WIDTH == 0,
         Direction::Up => row_id == 0,
         Direction::Down => row_id == BOARD_HEIGHT - 1,
     }

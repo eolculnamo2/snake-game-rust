@@ -29,7 +29,6 @@ pub fn init_board_vector(snake: LinkedList <SnakeCell>) -> Vec<Vec<CellType>> {
     let col: Vec<CellType> = vec![CellType::Blank(0); BOARD_WIDTH as usize];
     let mut rows = vec![col; BOARD_HEIGHT as usize];
 
-    // todo add snake initial positions here
     for i in 0..rows.len() {
         for j in 0..rows[i].len() {
             rows[i][j] = match find_cell_in_snake((i as i32, j as i32), snake.clone()) {
