@@ -1,5 +1,7 @@
+use std::collections::LinkedList;
+
 use crate::snake::init_snake_list;
-use crate::util::find_cell_in_snake;
+use crate::util::{find_cell_in_snake, convert_row_col_to_id};
 use tui::layout::Constraint;
 use tui::style::{Color, Style};
 use tui::widgets::{Block, Cell, Row, Table};
@@ -9,7 +11,7 @@ pub const BOARD_HEIGHT: i32 = 20;
 pub const BOARD_AREA: i32 = BOARD_WIDTH * BOARD_HEIGHT;
 
 type CellId = i32;
-const DEBUG: bool = false;
+const DEBUG: bool = true;
 
 #[derive(Clone)]
 pub struct SnakeCell {
@@ -23,11 +25,10 @@ pub enum CellType {
     Snake(SnakeCell),
 }
 
-fn init_board_vector() -> Vec<Vec<CellType>> {
+pub fn init_board_vector(snake: LinkedList <SnakeCell>) -> Vec<Vec<CellType>> {
     let col: Vec<CellType> = vec![CellType::Blank(0); BOARD_WIDTH as usize];
     let mut rows = vec![col; BOARD_HEIGHT as usize];
 
-    let snake = init_snake_list();
     // todo add snake initial positions here
     for i in 0..rows.len() {
         for j in 0..rows[i].len() {
@@ -41,8 +42,7 @@ fn init_board_vector() -> Vec<Vec<CellType>> {
 }
 
 // UI
-fn build_rows<'a>() -> Vec<Row<'a>> {
-    let board_vector = init_board_vector();
+fn build_rows<'a>(board_vector: Vec<Vec<CellType>>) -> Vec<Row<'a>> {
     let mut rows: Vec<Row<'a>> = vec![];
     for i in 0..board_vector.len() {
         let row = board_vector.get(i).unwrap();
@@ -52,7 +52,7 @@ fn build_rows<'a>() -> Vec<Row<'a>> {
             .map(|c| {
                 let id = match c {
                     CellType::Blank(id) => *id,
-                    CellType::Snake(_) => 0,
+                    CellType::Snake(snake_cell) => convert_row_col_to_id((snake_cell.row_id, snake_cell.col_id)),
                 };
                 let cell_from = if DEBUG {
                     id.to_string()
@@ -61,7 +61,7 @@ fn build_rows<'a>() -> Vec<Row<'a>> {
                 };
                 Cell::from(cell_from).style(Style::default().bg(match c {
                     CellType::Blank(_) => Color::DarkGray,
-                    CellType::Snake(_) => Color::LightGreen,
+                    CellType::Snake(_) => Color::Green,
                 }))
             })
             .collect::<Vec<Cell<'a>>>();
@@ -73,8 +73,9 @@ fn build_rows<'a>() -> Vec<Row<'a>> {
 
 pub fn build_board_table<'a>(
     width_constraints: &'a [Constraint; BOARD_WIDTH as usize],
+    board_vector: Vec<Vec<CellType>>
 ) -> Table<'a> {
-    Table::new(build_rows())
+    Table::new(build_rows(board_vector))
         .style(Style::default().fg(Color::White))
         .block(Block::default().title("Rust Snake Game"))
         // todo map constraints to board width

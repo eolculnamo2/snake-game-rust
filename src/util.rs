@@ -13,6 +13,11 @@ pub fn convert_id_to_row_col(id: i32) -> RowCol {
     (row_index, col_index)
 }
 
+pub fn convert_row_col_to_id(location: RowCol) -> i32 {
+    let (row, col) = location;
+    row * BOARD_HEIGHT + col
+}
+
 pub fn will_hit_wall(location: RowCol, direction: Direction) -> bool {
     let (row_id, col_id) = location;
     match direction {
