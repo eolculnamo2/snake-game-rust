@@ -1,5 +1,3 @@
-use tui::layout::Constraint;
-use std::{sync::mpsc, time::Instant};
 use array_macro::array;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEvent},
@@ -8,15 +6,17 @@ use crossterm::{
 };
 use std::{
     io::{self, Error},
-    time::Duration,
     thread,
+    time::Duration,
 };
+use std::{sync::mpsc, time::Instant};
+use tui::layout::Constraint;
 use tui::{backend::CrosstermBackend, Terminal};
 
 mod board;
+mod movement;
 mod snake;
 mod util;
-mod movement;
 
 enum GameEvent {
     Input(KeyEvent),
@@ -30,7 +30,6 @@ fn main() -> Result<(), Error> {
     let mut terminal = Terminal::new(backend)?;
     let width_constraints = array!(Constraint::Length(5); board::BOARD_WIDTH as usize);
 
-
     // game state
     let mut direction = movement::Direction::Right;
     let mut snake = snake::init_snake_list();
@@ -41,9 +40,9 @@ fn main() -> Result<(), Error> {
 
     // event management thraed
     let (dispatcher, subscriber) = mpsc::channel();
-    let loop_time = interval;
+    let loop_time = Duration::from_millis(10);
     // let loop_time = Duration::from_millis(250);
-    thread::spawn(move|| { 
+    thread::spawn(move || {
         let mut last_tick = Instant::now();
         loop {
             let timeout = loop_time
@@ -52,7 +51,9 @@ fn main() -> Result<(), Error> {
 
             if event::poll(timeout).expect("poll works") {
                 if let Event::Key(key) = event::read().expect("can read events") {
-                    dispatcher.send(GameEvent::Input(key)).expect("can send events");
+                    dispatcher
+                        .send(GameEvent::Input(key))
+                        .expect("can send events");
                 }
             }
 
@@ -68,28 +69,38 @@ fn main() -> Result<(), Error> {
         // todo, this sucks... have to clear our all pending ticks with while loop
         while let Ok(new_event) = subscriber.recv_timeout(Duration::from_millis(0)) {
             match new_event {
-                GameEvent::Input(key_event) => {
-                    match key_event.code {
-                        KeyCode::Left if direction != movement::Direction::Right => direction = movement::Direction::Left,
-                        KeyCode::Right if direction != movement::Direction::Left => direction = movement::Direction::Right,
-                        KeyCode::Up if direction != movement::Direction::Down => direction = movement::Direction::Up,
-                        KeyCode::Down if direction != movement::Direction::Up => direction = movement::Direction::Down,
-                        _ => ()
+                GameEvent::Input(key_event) => match key_event.code {
+                    KeyCode::Char('a') | KeyCode::Left
+                        if direction != movement::Direction::Right =>
+                    {
+                        direction = movement::Direction::Left
                     }
+                    KeyCode::Char('d') | KeyCode::Right
+                        if direction != movement::Direction::Left =>
+                    {
+                        direction = movement::Direction::Right
+                    }
+                    KeyCode::Char('w') | KeyCode::Up if direction != movement::Direction::Down => {
+                        direction = movement::Direction::Up
+                    }
+                    KeyCode::Char('s') | KeyCode::Down if direction != movement::Direction::Up => {
+                        direction = movement::Direction::Down
+                    }
+                    _ => (),
                 },
-                GameEvent::Tick => ()
+                GameEvent::Tick => (),
             }
         }
 
         match snake::make_iteration(snake.clone(), board_vector.clone(), direction.clone()) {
             Ok(new_state) => {
                 if new_state.game_end.is_some() {
-                    break
+                    break;
                 }
                 snake = new_state.snake;
                 board_vector = new_state.board;
-            },
-            Err(_) => break
+            }
+            Err(_) => break,
         }
         terminal.draw(|f| {
             let board = board::build_board_table(&width_constraints, board_vector.clone());
