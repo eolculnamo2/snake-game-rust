@@ -37,8 +37,6 @@ fn main() -> Result<(), Error> {
 
     // todo replace with stop on failure state
     let interval = Duration::from_millis(250);
-    let max_iterations = 100;
-    let mut current_iteration = 0; 
     let mut board_vector = board::init_board_vector(snake.clone());
 
     // event management thraed
@@ -67,10 +65,6 @@ fn main() -> Result<(), Error> {
     });
 
     loop {
-        if current_iteration > max_iterations {
-            break
-        }
-
         // todo, this sucks... have to clear our all pending ticks with while loop
         while let Ok(new_event) = subscriber.recv_timeout(Duration::from_millis(0)) {
             match new_event {
@@ -89,6 +83,9 @@ fn main() -> Result<(), Error> {
 
         match snake::make_iteration(snake.clone(), board_vector.clone(), direction.clone()) {
             Ok(new_state) => {
+                if new_state.game_end.is_some() {
+                    break
+                }
                 snake = new_state.snake;
                 board_vector = new_state.board;
             },
@@ -99,7 +96,6 @@ fn main() -> Result<(), Error> {
             f.render_widget(board, f.size());
         })?;
         thread::sleep(interval);
-        current_iteration += 1;
     }
     disable_raw_mode()?;
     execute!(

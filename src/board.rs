@@ -26,7 +26,7 @@ pub enum CellType {
     Snake(SnakeCell),
 }
 
-fn get_random_apple_id(board: &Vec<Vec<CellType>>) -> RowCol {
+pub fn get_random_apple_id(board: &Vec<Vec<CellType>>) -> RowCol {
     match get_random_cell(board) {
         CellType::Blank(id) => convert_id_to_row_col(id),
         _ => get_random_apple_id(board),
@@ -70,7 +70,7 @@ fn build_rows<'a>(board_vector: Vec<Vec<CellType>>) -> Vec<Row<'a>> {
                 };
                 Cell::from(cell_from).style(Style::default().bg(match c {
                     CellType::Blank(_) => Color::DarkGray,
-                    CellType::Apple(_) => Color::Magenta,
+                    CellType::Apple(_) => Color::LightRed,
                     CellType::Snake(_) => Color::Green,
                 }))
             })

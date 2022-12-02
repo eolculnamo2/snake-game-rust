@@ -1,12 +1,13 @@
 // the flow of deps sucks here.. lots of circular deps
 use std::collections::LinkedList;
-use crate::board::{BOARD_AREA, BOARD_WIDTH, SnakeCell, CellType};
+use crate::board::{BOARD_AREA, BOARD_WIDTH, SnakeCell, CellType, get_random_apple_id};
 use crate::util::{will_hit_wall, convert_id_to_row_col, convert_row_col_to_id};
 use crate::movement::{Direction};
 
 const INIT_LENGTH: i32 = 4;
 
 pub enum GameEndReason {
+    HitSelf,
     HitWall,
 }
 
@@ -38,15 +39,22 @@ fn build_snake(snake: &mut LinkedList<SnakeCell>, snake_len_remaining: i32) -> &
 
 }
 
+#[derive(PartialEq, Eq)]
+enum CollisionResult  {
+    NoOp,
+    GrowSnake,
+    GameEnd,
+}
+
 pub struct IterationOkResult {
     pub snake: LinkedList<SnakeCell>,
     pub board: Vec<Vec<CellType>>,
+    pub game_end: Option<GameEndReason>,
 }
 pub fn make_iteration(snake: LinkedList<SnakeCell>, current_board: Vec<Vec<CellType>>, direction: Direction) -> Result<IterationOkResult, GameEndReason> {
     let mut snake_clone = snake;
     let mut board_clone = current_board;
-    let old_tail = snake_clone.pop_back().unwrap_or_else(|| panic!("no tail found"));
-    let head = snake_clone.front().unwrap_or_else(|| panic!("Unable to find snake head"));
+    let head = snake_clone.front().cloned().unwrap_or_else(|| panic!("Unable to find snake head"));
     if will_hit_wall((head.row_id, head.col_id), direction.clone()) {
         return Err(GameEndReason::HitWall);
     }
@@ -63,13 +71,35 @@ pub fn make_iteration(snake: LinkedList<SnakeCell>, current_board: Vec<Vec<CellT
         },
     };
 
-    let old_tail_id = convert_row_col_to_id((old_tail.row_id, old_tail.col_id));
-    board_clone[old_tail.row_id as usize][old_tail.col_id as usize] = CellType::Blank(old_tail_id);
+    // handle head to new head collision
+    let collision_result = match board_clone[new_head.row_id as usize][new_head.col_id as usize] {
+        CellType::Blank(_) => CollisionResult::NoOp, // no op
+        CellType::Apple(_) => CollisionResult::GrowSnake,
+        CellType::Snake(_) => CollisionResult::GameEnd,
+    };
+
+
+    if collision_result != CollisionResult::GrowSnake {
+        let old_tail = snake_clone.pop_back().unwrap_or_else(|| panic!("no tail found"));
+        let old_tail_id = convert_row_col_to_id((old_tail.row_id, old_tail.col_id));
+        board_clone[old_tail.row_id as usize][old_tail.col_id as usize] = CellType::Blank(old_tail_id);
+    } 
     board_clone[head.row_id as usize][head.col_id as usize] = CellType::Snake(new_head.clone());
 
     snake_clone.push_front(new_head);
+
+
+    if collision_result == CollisionResult::GrowSnake {
+        let (apple_row, apple_col) = get_random_apple_id(&board_clone);
+        board_clone[apple_row as usize][apple_col as usize] = CellType::Apple((apple_row, apple_col));
+    }
     Ok(IterationOkResult {
         snake: snake_clone.to_owned(),
         board: board_clone,
+        game_end: if collision_result == CollisionResult::GameEnd {
+            Some(GameEndReason::HitSelf)
+        } else {
+            None
+        }
     })
 }
