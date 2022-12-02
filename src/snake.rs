@@ -48,7 +48,7 @@ pub struct IterationOkResult {
 pub fn make_iteration(snake: LinkedList<SnakeCell>, current_board: Vec<Vec<CellType>>, direction: Direction) -> Result<IterationOkResult, GameEndReason> {
     let mut snake_clone = snake;
     let mut board_clone = current_board;
-    snake_clone.pop_back();
+    let old_tail = snake_clone.pop_back().unwrap_or_else(|| panic!("no tail found"));
     let head = snake_clone.front().unwrap_or_else(|| panic!("Unable to find snake head"));
     if will_hit_wall((head.row_id, head.col_id), direction.clone()) {
         return Err(GameEndReason::HitWall);
@@ -66,10 +66,8 @@ pub fn make_iteration(snake: LinkedList<SnakeCell>, current_board: Vec<Vec<CellT
         },
     };
 
-
-    let tail = snake_clone.back().unwrap_or_else(|| panic!("Unable to find snake tail"));
-    let old_tail_id = convert_row_col_to_id((tail.row_id, tail.col_id));
-    board_clone[tail.row_id as usize][(tail.col_id - 1)  as usize] = CellType::Blank(old_tail_id);
+    let old_tail_id = convert_row_col_to_id((old_tail.row_id, old_tail.col_id));
+    board_clone[old_tail.row_id as usize][old_tail.col_id as usize] = CellType::Blank(old_tail_id);
     board_clone[head.row_id as usize][head.col_id as usize] = CellType::Snake(new_head.clone());
 
     snake_clone.push_front(new_head);
