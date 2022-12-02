@@ -55,14 +55,14 @@ pub fn make_iteration(snake: LinkedList<SnakeCell>, current_board: Vec<Vec<CellT
     }
     let new_head = SnakeCell {
         row_id: match direction {
-            Direction::Left | Direction::Right => head.row_id,
-            Direction::Up => head.row_id - BOARD_HEIGHT,
-            Direction::Down => head.row_id + BOARD_HEIGHT,
+            Direction::Up => head.row_id - 1,
+            Direction::Down => head.row_id + 1,
+            _ => head.row_id,
         },
         col_id: match direction {
-            Direction::Up | Direction::Down => head.col_id,
             Direction::Right => head.col_id + 1,
             Direction::Left => head.col_id - 1,
+            _ => head.col_id,
         },
     };
 
