@@ -1,11 +1,8 @@
 // the flow of deps sucks here.. lots of circular deps
 use std::collections::LinkedList;
-use tui::style::{Style, Color};
-use tui::widgets::Cell;
-
-use crate::board::{BOARD_AREA, BOARD_WIDTH, SnakeCell, BOARD_HEIGHT, CellType};
+use crate::board::{BOARD_AREA, BOARD_WIDTH, SnakeCell, CellType};
 use crate::util::{will_hit_wall, convert_id_to_row_col, convert_row_col_to_id};
-use crate::movement::{Direction, self};
+use crate::movement::{Direction};
 
 const INIT_LENGTH: i32 = 4;
 

@@ -1,9 +1,10 @@
+use rand::Rng;
 use std::cmp::max;
 use std::collections::LinkedList;
-use crate::board::{BOARD_WIDTH, BOARD_HEIGHT, BOARD_AREA, SnakeCell};
+use crate::board::{BOARD_WIDTH, BOARD_HEIGHT, BOARD_AREA, SnakeCell, CellType};
 use crate::movement::Direction;
 
-type RowCol = (i32, i32);
+pub type RowCol = (i32, i32);
 pub fn convert_id_to_row_col(id: i32) -> RowCol {
     if id > BOARD_AREA {
         panic!("ID must be less than board area")
@@ -43,4 +44,12 @@ pub fn find_cell_in_snake(location: RowCol, snake: LinkedList<SnakeCell>) -> Opt
     }
 
     matched_cell
+}
+
+pub fn get_random_cell(board: &Vec<Vec<CellType>>) -> CellType {
+    let mut rng = rand::thread_rng();
+    // let random_index = rng.gen_range(0..board.len());
+    let random_row = rng.gen_range(0..BOARD_HEIGHT) as usize;
+    let random_col = rng.gen_range(0..BOARD_WIDTH) as usize;
+    board[random_row][random_col].to_owned()
 }

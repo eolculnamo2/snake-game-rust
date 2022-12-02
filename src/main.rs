@@ -25,7 +25,7 @@ enum GameEvent {
 fn main() -> Result<(), Error> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
-    // execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
     let width_constraints = array!(Constraint::Length(5); board::BOARD_WIDTH as usize);
